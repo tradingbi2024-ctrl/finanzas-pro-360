@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>Panel de administrador</h2>
+
+<div class="card">
+    <h3>Usuarios registrados</h3>
+    <table class="users-table">
+        <thead>
+            <tr>
+                <th>ID</th><th>Usuario</th><th>Email</th>
+                <th>Último acceso</th><th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="admin-users"></tbody>
+    </table>
+</div>
+
+<script>
+async function loadUsers() {
+    const r = await fetch("/admin/list");
+    const data = await r.json();
+    const tbody = document.getElementById("admin-users");
+    tbody.innerHTML = "";
+
+    data.users.forEach(u => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${u.id}</td>
+                <td>${u.username}</td>
+                <td>${u.email}</td>
+                <td>${u.last_login}</td>
+                <td><button onclick="delUser(${u.id})">Eliminar</button></td>
+            </tr>`;
+    });
+}
+
+async function delUser(id) {
+    if(!confirm("¿Eliminar este usuario?")) return;
+
+    await fetch("/admin/delete/" + id, {method:"DELETE"});
+    loadUsers();
+}
+
+loadUsers();
+</script>
+
+{% endblock %}
