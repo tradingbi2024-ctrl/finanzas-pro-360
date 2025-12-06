@@ -2,7 +2,7 @@ services:
   - type: web
     name: finanzas-pro-360
     env: python
-    buildCommand: ""
-    startCommand: gunicorn app:app --preload
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app --preload"
     plan: free
     autoDeploy: true
