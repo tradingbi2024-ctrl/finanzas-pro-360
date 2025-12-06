@@ -1,8 +1,12 @@
 services:
   - type: web
-    name: finanzas-pro-360
-    env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn app:app --preload"
+    name: FinanzasPro360
+    runtime: python
     plan: free
-    autoDeploy: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://postgresql15_mw9q_user:eRr1W7j2dV73PX5ouM9gp3SMwXDnxI5r@dpg-d4qb8cqli9vc739r29ig-a.internal:5432/postgresql15_mw9q
+      - key: SECRET_KEY
+        generateValue: true
