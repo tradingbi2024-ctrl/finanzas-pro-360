@@ -1,0 +1,52 @@
+body {
+    background:#0f172a;
+    color:#e2e8f0;
+    margin:0;
+    padding:20px;
+    font-family: Arial;
+}
+
+.navbar {
+    background:#1e293b;
+    padding:10px 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.card {
+    background:#1e293b;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:15px;
+}
+
+input, button {
+    width:100%;
+    padding:10px;
+    margin-top:8px;
+    border-radius:8px;
+    border:none;
+}
+
+button {
+    background:#10b981;
+    color:white;
+    font-weight:bold;
+}
+
+.grid-2 {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+}
+
+.center {
+    max-width:350px;
+    margin:auto;
+}
+
+.status {
+    margin-top:5px;
+    color:#facc15;
+}
