@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Finanzas Pro 360</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- CHART.JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        h1,h2,h3 { margin: 0; }
+        .hidden { display: none; }
+
+        .container {
+            padding: 1rem;
+        }
+
+        .card {
+            background: #161b22;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 0 10px rgba(0,0,0,.3);
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: .55rem;
+            margin-top: .3rem;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            background: #0d1117;
+            color: #e6edf3;
+        }
+
+        button {
+            cursor: pointer;
+            background: #238636;
+            border: none;
+            margin-top: .8rem;
+            font-weight: bold;
+        }
+        button:hover { background: #2ea043; }
+
+        .danger { background: #da3633; }
+        .danger:hover { background: #f85149; }
+
+        .row { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .col { flex: 1 1 300px; }
+
+        .message { padding: .5rem; margin-top: .5rem; font-size: .9rem; }
+        .msg-ok { color: #3fb950; }
+        .msg-error { color: #f85149; }
+
+        canvas { background: #0d1117; border-radius: 10px; padding: .5rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ========================================================= -->
+    <!--  1. SETUP ADMINISTRADOR INICIAL                          -->
+    <!-- ========================================================= -->
+    <div id="setup-admin-section" class="hidden card">
+        <h2>Configuración inicial (Administrador)</h2>
+        <p>Este paso solo ocurre una vez.</p>
+
+        <label>Nombre</label>
+        <input id="setup-admin-name" />
+
+        <label>Correo</label>
+        <input id="setup-admin-email" />
+
+        <label>Contraseña (4 caracteres, 1 letra, 1 número)</label>
+        <input type="password" id="setup-admin-pass1" maxlength="4" />
+
+        <label>Confirmar contraseña</label>
+        <input type="password" id="setup-admin-pass2" maxlength="4" />
+
+        <button onclick="setupAdmin()">Crear Administrador</button>
+        <div id="setup-admin-msg" class="message"></div>
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!--  2. LOGIN / REGISTRO                                     -->
+    <!-- ========================================================= -->
+    <div id="auth-section" class="hidden">
+
+        <div class="card">
+            <h2>Iniciar Sesión</h2>
+
+            <label>Correo</label>
+            <input id="login-email" />
+
+            <label>Contraseña (4 caracteres)</label>
+            <input type="password" id="login-pass" maxlength="4" />
+
+            <button onclick="loginUser()">Entrar como Usuario</button>
+            <button onclick="loginAdmin()">Entrar como Administrador</button>
+
+            <div id="login-msg" class="message"></div>
+        </div>
+
+        <div class="card">
+            <h2>Crear Perfil de Usuario</h2>
+
+            <label>Nombre</label>
+            <input id="reg-name" />
+
+            <label>Correo</label>
+            <input id="reg-email" />
+
+            <label>Contraseña</label>
+            <input type="password" id="reg-pass1" maxlength="4" />
+
+            <label>Confirmar contraseña</label>
+            <input type="password" id="reg-pass2" maxlength="4" />
+
+            <button onclick="registerUser()">Crear Perfil</button>
+
+            <div id="reg-msg" class="message"></div>
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!--  3. PANEL ADMIN                                           -->
+    <!-- ========================================================= -->
+    <div id="admin-section" class="hidden">
+        <div class="card">
+            <h2>Panel Administrador</h2>
+            <p>Solo puedes ver y eliminar perfiles, no acceder a ellos.</p>
+            <button onclick="logout()">Cerrar sesión</button>
+        </div>
+
+        <div class="card">
+            <h3>Usuarios registrados</h3>
+            <div id="admin-users"></div>
+        </div>
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!--  4. PANEL USUARIO (FINANZAS COMPLETAS)                   -->
+    <!-- ========================================================= -->
+    <div id="user-section" class="hidden">
+
+        <div class="card">
+            <h2 id="user-welcome"></h2>
+            <p id="versiculo"></p>
+            <button onclick="logout()">Cerrar sesión</button>
+            <button class="danger" onclick="eliminarPerfil()">Eliminar mi perfil</button>
+        </div>
+
+
+        <!-- CONFIGURACIÓN DEL MES -->
+        <div class="card">
+            <h3>Configuración del Mes</h3>
+
+            <label>Año</label>
+            <input id="conf-anio" type="number">
+
+            <label>Mes (1-12)</label>
+            <input id="conf-mes" type="number">
+
+            <label>Días que trabajarás este mes (22 a 30)</label>
+            <input id="conf-dias" type="number">
+
+            <button onclick="guardarConfigMes()">Guardar configuración</button>
+            <div id="config-msg" class="message"></div>
+        </div>
+
+
+        <!-- CATEGORÍAS -->
+        <div class="card">
+            <h3>Categorías Configuradas</h3>
+            <div id="cats-list"></div>
+
+            <h4>Añadir / Editar Categoría</h4>
+
+            <input id="cat-id" type="hidden">
+
+            <label>Nombre</label>
+            <input id="cat-nombre">
+
+            <label>Tipo</label>
+            <select id="cat-tipo">
+                <option value="mensual">Mensual (valor fijo)</option>
+                <option value="porcentaje">Porcentaje (%)</option>
+            </select>
+
+            <label>Valor (monto mensual o %)</label>
+            <input id="cat-valor" type="number">
+
+            <button onclick="guardarCategoria()">Guardar Categoría</button>
+            <button class="danger" onclick="cancelarCategoria()">Cancelar</button>
+
+            <div id="cat-msg" class="message"></div>
+        </div>
+
+
+        <!-- INGRESOS -->
+        <div class="card">
+            <h3>Registrar Ingreso Diario</h3>
+
+            <label>Fecha</label>
+            <input id="ing-fecha" type="date">
+
+            <label>Monto ingresado</label>
+            <input id="ing-monto" type="number">
+
+            <button onclick="registrarIngreso()">Guardar ingreso</button>
+            <div id="ing-msg" class="message"></div>
+        </div>
+
+
+        <!-- RESUMEN MENSUAL -->
+        <div class="card">
+            <h3>Resumen del Mes</h3>
+            <div id="resumen-mes"></div>
+
+            <canvas id="graf-mensual" height="120"></canvas>
+        </div>
+
+
+        <!-- DISTRIBUCIÓN DIARIA -->
+        <div class="card">
+            <h3>Distribución Recomendada para Hoy</h3>
+            <div id="distribucion"></div>
+        </div>
+
+
+        <!-- AHORRO -->
+        <div class="card">
+            <h3>Metas de Ahorro</h3>
+
+            <div id="ahorro-list"></div>
+
+            <h4>Crear Nueva Meta</h4>
+
+            <label>Nombre</label>
+            <input id="meta-nombre">
+
+            <label>Monto objetivo</label>
+            <input id="meta-objetivo" type="number">
+
+            <label>Fecha límite</label>
+            <input id="meta-fecha" type="date">
+
+            <button onclick="crearMetaAhorro()">Crear meta</button>
+            <div id="meta-msg" class="message"></div>
+
+            <canvas id="graf-ahorro" height="120"></canvas>
+        </div>
+
+
+        <!-- ANUAL -->
+        <div class="card">
+            <h3>Proyección Anual</h3>
+            <div id="resumen-anual"></div>
+            <canvas id="graf-anual" height="120"></canvas>
+        </div>
+
+
+        <!-- PDF -->
+        <div class="card">
+            <h3>Generar Reporte PDF</h3>
+            <button onclick="descargarPDF()">Descargar PDF</button>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =============================================================== -->
+<!-- ======================  SCRIPT PRINCIPAL  ====================== -->
+<!-- =============================================================== -->
+
+<script>
+let chartMensual = null;
+let chartAnual = null;
+let chartAhorro = null;
+
+const VERSICULOS = [
+    "El plan del diligente ciertamente tiende a la abundancia. — Proverbios 21:5",
+    "Honra al Señor con tus riquezas... y tus graneros se llenarán. — Proverbios 3:9-10",
+    "El alma del perezoso desea y nada alcanza; mas el alma de los diligentes será prosperada. — Pr 13:4",
+    "Porque yo sé los planes que tengo para ustedes... planes de bienestar y no de calamidad. — Jeremías 29:11",
+    "Busca primero el reino de Dios y justicia, y todo lo demás vendrá por añadidura. — Mateo 6:33"
+];
+function versiculoRandom() {
+    return VERSICULOS[Math.floor(Math.random()*VERSICULOS.length)];
+}
+
+
+// ===============================
+//   ON LOAD: VER ESTADO AUTH
+// ===============================
+window.onload = () => {
+    fetch("/api/auth/state")
+        .then(r => r.json())
+        .then(data => {
+            if (data.setup_needed) {
+                mostrar("setup-admin-section");
+                return;
+            }
+            if (!data.logged) {
+                mostrar("auth-section");
+                return;
+            }
+            if (data.role === "admin") {
+                cargarAdminPanel();
+                return;
+            }
+            if (data.role === "user") {
+                cargarPanelUsuario();
+                return;
+            }
+        });
+};
+
+
+// =========================
+//   FUNCIONES UTIL
+// =========================
+function mostrar(id) {
+    document.getElementById("setup-admin-section").classList.add("hidden");
+    document.getElementById("auth-section").classList.add("hidden");
+    document.getElementById("admin-section").classList.add("hidden");
+    document.getElementById("user-section").classList.add("hidden");
+
+    document.getElementById(id).classList.remove("hidden");
+}
+
+
+// =============================
+//  SETUP ADMINISTRADOR
+// =============================
+function setupAdmin() {
+    const n = document.getElementById("setup-admin-name").value.trim();
+    const e = document.getElementById("setup-admin-email").value.trim();
+    const p1 = document.getElementById("setup-admin-pass1").value.trim();
+    const p2 = document.getElementById("setup-admin-pass2").value.trim();
+    const msg = document.getElementById("setup-admin-msg");
+
+    msg.textContent = "";
+
+    fetch("/api/auth/setup_admin", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            nombre: n, email: e,
+            password: p1, confirm: p2
+        })
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.ok) { msg.textContent = d.error; msg.className="message msg-error"; return; }
+        msg.textContent = "Administrador creado. Cargando...";
+        setTimeout(()=>window.location.reload(),800);
+    });
+}
+
+
+// =============================
+//   LOGIN ADMIN
+// =============================
+function loginAdmin() {
+    const e = document.getElementById("login-email").value.trim();
+    const p = document.getElementById("login-pass").value.trim();
+    const msg = document.getElementById("login-msg");
+
+    fetch("/api/auth/admin/login", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({email: e, password:p})
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if (!d.ok) { msg.textContent=d.error; msg.className="message msg-error"; return; }
+        window.location.reload();
+    });
+}
+
+
+// =============================
+//   LOGIN USUARIO
+// =============================
+function loginUser() {
+    const e = document.getElementById("login-email").value.trim();
+    const p = document.getElementById("login-pass").value.trim();
+    const msg = document.getElementById("login-msg");
+
+    fetch("/api/auth/user/login", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({email: e, password:p})
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if (!d.ok) { msg.textContent=d.error; msg.className="message msg-error"; return; }
+        window.location.reload();
+    });
+}
+
+
+// =============================
+//   REGISTRO USUARIO
+// =============================
+function registerUser() {
+    const n = document.getElementById("reg-name").value.trim();
+    const e = document.getElementById("reg-email").value.trim();
+    const p1 = document.getElementById("reg-pass1").value.trim();
+    const p2 = document.getElementById("reg-pass2").value.trim();
+    const msg = document.getElementById("reg-msg");
+
+    msg.textContent="";
+
+    fetch("/api/auth/user/register", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({nombre:n, email:e, password:p1, confirm:p2})
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if (!d.ok) { msg.textContent=d.error; msg.className="message msg-error"; return; }
+        window.location.reload();
+    });
+}
+
+
+// =============================
+//   LOGOUT
+// =============================
+function logout() {
+    fetch("/api/auth/logout", {method:"POST"})
+        .then(()=> window.location.reload());
+}
+
+
+// =============================
+//   PANEL ADMIN
+// =============================
+function cargarAdminPanel() {
+    mostrar("admin-section");
+
+    fetch("/api/admin/users")
+        .then(r=>r.json())
+        .then(d=>{
+            if (!d.ok) return;
+            const div = document.getElementById("admin-users");
+            div.innerHTML = "";
+
+            d.usuarios.forEach(u=>{
+                const row = document.createElement("div");
+                row.style.marginBottom = "10px";
+
+                row.innerHTML = `
+                    <b>${u.nombre}</b> (${u.email})
+                    <button class="danger" style="width:auto;margin-left:10px"
+                        onclick="adminEliminarUsuario(${u.id})">Eliminar</button>
+                `;
+                div.appendChild(row);
+            });
+        });
+}
+
+function adminEliminarUsuario(id) {
+    if (!confirm("¿Eliminar este perfil permanentemente?")) return;
+
+    fetch("/api/admin/users/delete", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({id:id})
+    })
+    .then(()=> cargarAdminPanel());
+}
+
+
+// =============================
+//   PANEL USUARIO
+// =============================
+function cargarPanelUsuario() {
+    mostrar("user-section");
+
+    document.getElementById("versiculo").textContent = versiculoRandom();
+
+    cargarEstadoUsuario();
+}
+
+
+// =============================
+//   CARGAR DATOS DEL USUARIO
+// =============================
+function cargarEstadoUsuario() {
+    fetch("/api/state")
+        .then(r=>r.json())
+        .then(d=>{
+            if (!d.ok) return;
+
+            document.getElementById("user-welcome").textContent =
+                "Bienvenido, " + d.perfil.nombre;
+
+            llenarConfigMes(d.perfil.config);
+            mostrarCategorias(d.categorias);
+            mostrarResumenMes(d.resumen_mensual);
+            mostrarDistribucion(d.diario);
+            mostrarAhorro(d.ahorros);
+            mostrarAnual(d.anual);
+        });
+}
+
+
+// =============================
+//   CONFIG MES
+// =============================
+function llenarConfigMes(cfg) {
+    document.getElementById("conf-anio").value = cfg.anio;
+    document.getElementById("conf-mes").value = cfg.mes;
+    document.getElementById("conf-dias").value = cfg.dias_trabajo;
+}
+
+function guardarConfigMes() {
+    const msg = document.getElementById("config-msg");
+    msg.textContent = "";
+
+    fetch("/api/profile/config_mes", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+            anio: document.getElementById("conf-anio").value,
+            mes: document.getElementById("conf-mes").value,
+            dias_trabajo: document.getElementById("conf-dias").value
+        })
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if (!d.ok) { msg.textContent=d.error; msg.className="message msg-error"; return; }
+        msg.textContent = "Configuración guardada.";
+        msg.className = "message msg-ok";
+        cargarEstadoUsuario();
+    });
+}
+
+
+// =============================
+//   CATEGORÍAS
+// =============================
+function mostrarCategorias(cats) {
+    const div = document.getElementById("cats-list");
+    div.innerHTML = "";
+
+    cats.forEach(c=>{
+        const item = document.createElement("div");
+        item.className = "card";
+        item.style.padding = "10px";
+        item.style.marginBottom = "10px";
+
+        item.innerHTML = `
+            <b>${c.nombre}</b> — ${c.tipo}<br>
+            Meta mes: ${c.monto_mensual.toFixed(0)} | Real: ${c.real_mes.toFixed(0)}<br>
+            Estado: ${c.estado}<br>
+            <button style="width:auto;margin-top:6px" onclick="editarCategoria(${c.id},
+                '${c.nombre}', '${c.tipo}', ${c.porcentaje || c.monto_mensual})">Editar</button>
+            <button class="danger" style="width:auto;margin-left:8px" onclick="eliminarCategoria(${c.id})">Eliminar</button>
+        `;
+        div.appendChild(item);
+    });
+}
+
+function editarCategoria(id, nombre, tipo, valor) {
+    document.getElementById("cat-id").value = id;
+    document.getElementById("cat-nombre").value = nombre;
+    document.getElementById("cat-tipo").value = tipo;
+    document.getElementById("cat-valor").value = valor;
+}
+
+function cancelarCategoria() {
+    document.getElementById("cat-id").value = "";
+    document.getElementById("cat-nombre").value = "";
+    document.getElementById("cat-tipo").value = "mensual";
+    document.getElementById("cat-valor").value = "";
+}
+
+function guardarCategoria() {
+    const id = document.getElementById("cat-id").value;
+    const nombre = document.getElementById("cat-nombre").value;
+    const tipo = document.getElementById("cat-tipo").value;
+    const valor = document.getElementById("cat-valor").value;
+
+    const msg = document.getElementById("cat-msg");
+    msg.textContent = "";
+
+    const endpoint = id ? "/api/categoria/update" : "/api/categoria";
+    const payload = id ? {id:id, nombre, tipo, valor} : {nombre, tipo, valor};
+
+    fetch(endpoint, {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(payload)
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if (!d.ok) { msg.textContent=d.error; msg.className="message msg-error"; return; }
+        msg.textContent="Categoría guardada.";
+        msg.className="message msg-ok";
+        cancelarCategoria();
+        cargarEstadoUsuario();
+    });
+}
+
+function eliminarCategoria(id) {
+    if (!confirm("¿Eliminar categoría?")) return;
+
+    fetch("/api/categoria/delete", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({id:id})
+    })
+    .then(()=> cargarEstadoUsuario());
+}
+
+
+// =============================
+//   INGRESOS
+// =============================
+function registrarIngreso() {
+    const fecha = document.getElementById("ing-fecha").value;
+    const monto = document.getElementById("ing-monto").value;
+    const msg = document.getElementById("ing-msg");
+
+    fetch("/api/ingreso", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({fecha, monto})
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if (!d.ok) { msg.textContent=d.error; msg.className="message msg-error"; return; }
+        msg.textContent = "Ingreso guardado.";
+        msg.className = "message msg-ok";
+        cargarEstadoUsuario();
+    });
+}
+
+
+// =============================
+//   RESUMEN MENSUAL + GRAFICO
+// =============================
+function mostrarResumenMes(r) {
+    const div = document.getElementById("resumen-mes");
+    div.innerHTML = `
+        <b>Meta mensual:</b> ${r.meta.ingreso_mensual_meta.toFixed(0)}<br>
+        <b>Ingresos reales:</b> ${r.total_ingresos.toFixed(0)}<br>
+        <b>Ideal hoy:</b> ${r.esperado_a_hoy.toFixed(0)}<br>
+        <b>Hoy ingresaste:</b> ${r.ingreso_hoy.toFixed(0)}<br><br>
+        <b>Estado:</b> ${r.estado_texto}
+    `;
+
+    const ctx = document.getElementById("graf-mensual").getContext("2d");
+
+    if (chartMensual) chartMensual.destroy();
+
+    chartMensual = new Chart(ctx, {
+        type:"line",
+        data:{
+            labels:r.serie.dias,
+            datasets:[
+                {label:"Ideal acumulado", data:r.serie.plan_acumulado, borderColor:"#58a6ff"},
+                {label:"Real acumulado", data:r.serie.real_acumulado, borderColor:"#3fb950"}
+            ]
+        },
+        options:{responsive:true}
+    });
+}
+
+
+// =============================
+//   DISTRIBUCION DIARIA
+// =============================
+function mostrarDistribucion(d) {
+    const div = document.getElementById("distribucion");
+    div.innerHTML = `
+        <b>Ingreso ideal:</b> ${d.ingreso_ideal_diario.toFixed(0)}<br>
+        <b>Ingreso real hoy:</b> ${d.ingreso_real_hoy.toFixed(0)}<br><br>
+        <b>${d.mensaje}</b>
+        <hr>
+    `;
+
+    d.distribucion.forEach(c=>{
+        div.innerHTML += `
+            <b>${c.nombre}</b><br>
+            Ideal diario: ${c.ideal_diario.toFixed(0)}<br>
+            Hoy recomendado: ${c.recomendado_hoy.toFixed(0)}<br><br>
+        `;
+    });
+}
+
+
+// =============================
+//   AHORRO
+// =============================
+function mostrarAhorro(ahorros) {
+    const div = document.getElementById("ahorro-list");
+    div.innerHTML = "";
+
+    let labels=[], ideal=[], real=[];
+
+    ahorros.forEach(a=>{
+        div.innerHTML += `
+            <div class="card">
+                <b>${a.nombre}</b><br>
+                Objetivo: ${a.objetivo}<br>
+                Aportado: ${a.total_aportado}<br>
+                Estado: ${a.estado}<br>
+                Consejo: ${a.sugerencia}<br>
+            </div>
+        `;
+
+        labels.push(a.nombre);
+        ideal.push(a.meta_a_hoy);
+        real.push(a.total_aportado);
+    });
+
+    const ctx = document.getElementById("graf-ahorro").getContext("2d");
+    if (chartAhorro) chartAhorro.destroy();
+
+    chartAhorro = new Chart(ctx,{
+        type:"bar",
+        data:{
+            labels: labels,
+            datasets:[
+                {label:"Meta a hoy", data:ideal, backgroundColor:"#58a6ff"},
+                {label:"Aportado", data:real, backgroundColor:"#3fb950"}
+            ]
+        }
+    });
+}
+
+function crearMetaAhorro() {
+    const n = document.getElementById("meta-nombre").value;
+    const o = document.getElementById("meta-objetivo").value;
+    const f = document.getElementById("meta-fecha").value;
+    const msg = document.getElementById("meta-msg");
+
+    fetch("/api/ahorro/meta", {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({nombre:n, objetivo:o, fecha_fin:f})
+    })
+    .then(r=>r.json())
+    .then(d=>{
+        if (!d.ok) { msg.textContent=d.error; msg.className="message msg-error"; return; }
+        msg.textContent="Meta creada.";
+        msg.className="message msg-ok";
+        cargarEstadoUsuario();
+    });
+}
+
+
+// =============================
+//   PROYECCION ANUAL
+// =============================
+function mostrarAnual(a) {
+    const div = document.getElementById("resumen-anual");
+    div.innerHTML = `
+        <b>Meta anual (auto):</b> ${a.meta_anual_auto.toFixed(0)}<br>
+        <b>Real anual:</b> ${a.real_anual.toFixed(0)}<br>
+    `;
+
+    const ctx = document.getElementById("graf-anual").getContext("2d");
+
+    if (chartAnual) chartAnual.destroy();
+
+    chartAnual = new Chart(ctx, {
+        type:"line",
+        data:{
+            labels:a.meses,
+            datasets:[
+                {label:"Ideal mensual", data:a.ideal_mensual, borderColor:"#58a6ff"},
+                {label:"Real mensual", data:a.real_mensual, borderColor:"#3fb950"}
+            ]
+        }
+    });
+}
+
+
+// =============================
+//   PDF
+// =============================
+function descargarPDF() {
+    window.location.href = "/api/reporte/pdf";
+}
+
+
+// =============================
+//   ELIMINAR PERFIL USUARIO
+// =============================
+function eliminarPerfil() {
+    if (!confirm("Esto borrará todo tu perfil. ¿Continuar?")) return;
+
+    fetch("/api/user/delete", {method:"POST"})
+        .then(()=> window.location.reload());
+}
+
+</script>
+
+</body>
+</html>
