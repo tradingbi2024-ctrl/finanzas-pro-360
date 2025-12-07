@@ -1,34 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: Helvetica; }
-        h2 { text-align: center; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Informe Finanzas 180°</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; }
+    h1 { text-align: center; }
+    h2 { margin-top: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #333; padding: 4px; text-align: left; }
+  </style>
 </head>
 <body>
+  <h1>Informe mensual - Finanzas 180°</h1>
+  <p>Usuario: {{ user.name }} ({{ user.email }})</p>
+  <p>Mes: {{ state.year }}-{{ "%02d"|format(state.month) }}</p>
 
-<h2>Informe Financiero</h2>
+  <h2>Resumen general</h2>
+  <p>Meta ingreso mensual: {{ state.monthly_income_goal }}</p>
+  <p>Meta ingreso diario ({{ state.working_days }} días): {{ state.daily_income_goal }}</p>
+  <p>Ingresos reales mes: {{ state.total_income_month }}</p>
+  <p>Promedio diario real: {{ state.real_daily_avg }}</p>
+  <p>Proyección anual (simple): {{ state.projected_annual_income }}</p>
+  <p>Diagnóstico: {{ state.income_status }}</p>
 
-<p>Usuario: {{ user }}</p>
-<p>Fecha de generación: {{ date }}</p>
+  <h2>Categorías</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Meta mes</th>
+        <th>Real mes</th>
+        <th>%</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in state.categories %}
+      <tr>
+        <td>{{ c.name }}</td>
+        <td>{{ c.meta_mes }}</td>
+        <td>{{ c.real_mes }}</td>
+        <td>{{ c.perc }}</td>
+        <td>{{ c.estado }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-<hr>
-
-<h3>Ingresos:</h3>
-<ul>
-{% for i in ingresos %}
-    <li>{{ i.date }} - ${{ i.amount }}</li>
-{% endfor %}
-</ul>
-
-<h3>Ahorros:</h3>
-<ul>
-{% for s in savings %}
-    <li>{{ s.date }} - ${{ s.amount }}</li>
-{% endfor %}
-</ul>
-
+  <h2>Metas de ahorro</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Meta</th>
+        <th>Objetivo</th>
+        <th>Ahorrado</th>
+        <th>%</th>
+        <th>Fecha límite</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for g in state.saving_goals %}
+      <tr>
+        <td>{{ g.name }}</td>
+        <td>{{ g.target }}</td>
+        <td>{{ g.real }}</td>
+        <td>{{ g.perc }}</td>
+        <td>{{ g.deadline }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </body>
 </html>
