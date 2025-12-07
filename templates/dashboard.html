@@ -1,50 +1,136 @@
 {% extends "layout.html" %}
+{% block title %}Dashboard{% endblock %}
+
 {% block content %}
+<div class="grid-main">
 
-<h2>Panel financiero</h2>
+  <!-- Categorías mensuales -->
+  <section class="card">
+    <h2>Categorías mensuales / porcentajes</h2>
+    <form id="category-form">
+      <input type="hidden" id="cat-id" />
+      <label>Nombre de la categoría
+        <input type="text" id="cat-name" placeholder="Ej: Cuota moto, Gasolina, Arriendo" />
+      </label>
+      <label>Monto meta mensual
+        <input type="number" id="cat-monthly" step="1000" />
+      </label>
+      <button type="submit">Guardar categoría</button>
+    </form>
+    <div class="status" id="cat-status"></div>
+  </section>
 
-<div class="grid-2">
+  <!-- Ingreso del día -->
+  <section class="card">
+    <h2>Registrar ingreso del día</h2>
+    <form id="income-form">
+      <label>Fecha (YYYY-MM-DD)
+        <input type="date" id="income-date" />
+      </label>
+      <label>Monto ganado hoy
+        <input type="number" id="income-amount" step="1000" />
+      </label>
+      <button type="submit">Guardar ingreso</button>
+    </form>
+    <div class="status" id="income-status"></div>
+  </section>
 
-    <div class="card">
-        <h3>Registrar ingreso diario</h3>
-        <input id="income-amount" type="number" placeholder="Monto">
-        <button onclick="addIncome()">Guardar</button>
-        <p id="income-status" class="status"></p>
-    </div>
+  <!-- Resumen del mes -->
+  <section class="card">
+    <h2>Resumen del mes</h2>
+    <div id="summary-text" class="resumen"></div>
+    <div id="summary-status" class="diagnostico"></div>
+  </section>
 
-    <div class="card">
-        <h3>Registrar ahorro</h3>
-        <input id="saving-amount" type="number" placeholder="Monto">
-        <button onclick="addSaving()">Guardar ahorro</button>
-        <p id="saving-status" class="status"></p>
-    </div>
+  <!-- Tabla Categorías -->
+  <section class="card card-wide">
+    <h2>Categorías configuradas</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Meta mes</th>
+          <th>Real mes</th>
+          <th>%</th>
+          <th>Estado</th>
+          <th>Diario sugerido</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="categories-table-body">
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Metas de ahorro -->
+  <section class="card">
+    <h2>Metas de ahorro (máx 5)</h2>
+    <form id="saving-goal-form">
+      <label>Nombre de la meta
+        <input type="text" id="saving-name" placeholder="Ej: Fondo emergencia, Moto nueva" />
+      </label>
+      <label>Monto objetivo total
+        <input type="number" id="saving-target" step="1000" />
+      </label>
+      <label>Fecha límite (YYYY-MM-DD)
+        <input type="date" id="saving-deadline" />
+      </label>
+      <button type="submit">Crear meta</button>
+    </form>
+
+    <h3>Registrar aporte a meta</h3>
+    <form id="saving-contrib-form">
+      <label>Meta
+        <select id="saving-select"></select>
+      </label>
+      <label>Fecha (YYYY-MM-DD)
+        <input type="date" id="saving-contrib-date" />
+      </label>
+      <label>Monto
+        <input type="number" id="saving-contrib-amount" step="1000" />
+      </label>
+      <button type="submit">Registrar aporte</button>
+    </form>
+    <div class="status" id="saving-status"></div>
+  </section>
+
+  <!-- Estado metas de ahorro -->
+  <section class="card card-wide">
+    <h2>Estado de ahorro</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Meta</th>
+          <th>Objetivo</th>
+          <th>Ahorrado</th>
+          <th>%</th>
+          <th>Fecha límite</th>
+        </tr>
+      </thead>
+      <tbody id="saving-table-body"></tbody>
+    </table>
+  </section>
+
+  <!-- Gráfica ingresos / proyección -->
+  <section class="card card-wide">
+    <h2>Proyección mensual y anual</h2>
+    <canvas id="incomeChart" height="120"></canvas>
+  </section>
+
+  <!-- Eliminar cuenta -->
+  <section class="card card-danger">
+    <h2>Eliminar mi perfil</h2>
+    <p>Si eliminas tu perfil se borrarán todos tus registros, categorías y ahorros.</p>
+    <form method="post" action="{{ url_for('auth.delete_own_account') }}">
+      <button type="submit" class="btn-danger">Eliminar mi cuenta</button>
+    </form>
+  </section>
 
 </div>
+{% endblock %}
 
-<div class="card">
-    <h3>Categorías del presupuesto mensual</h3>
-
-    <div id="cat-list"></div>
-
-    <h4>Nueva categoría:</h4>
-    <input id="cat-name" placeholder="Nombre">
-    <input id="cat-monthly" type="number" placeholder="Meta mensual">
-    <button onclick="addCategory()">Agregar categoría</button>
-</div>
-
-<div class="card">
-    <h3>Gráfico de ingresos del mes</h3>
-    <canvas id="chart-income"></canvas>
-</div>
-
-<div class="card">
-    <h3>Gráfico de ahorro</h3>
-    <canvas id="chart-saving"></canvas>
-</div>
-
-<div class="card">
-    <h3>Proyección anual</h3>
-    <canvas id="chart-year"></canvas>
-</div>
-
+{% block extra_js %}
+<script>
+  window.FINANZAS_STATE = {{ state|tojson }};
+</script>
 {% endblock %}
